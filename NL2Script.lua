@@ -152,9 +152,9 @@ spawn(shardsFarm)
 spawn(coinsFarm)
 spawn(collectChests)
 spawn(autoWheel)
-spawn(buyAllBelts)
+spawn(buyAllCrystals)
 spawn(buyAllSkills)
-spawn(buyAllShuriken)
+spawn(buyAllElements)
 spawn(buyAllEvolutions)
 spawn(defeatBoss) -- Targets Elemental boss
 spawn(function() openSelectedEgg("Lightning storm orb") end)
@@ -171,7 +171,7 @@ frame.Draggable = true
 
 local titleLabel = Instance.new("TextLabel", frame)
 titleLabel.Size = UDim2.new(1, 0, 0.1, 0)
-titleLabel.Text = "Ninja Legends 2 Script"
+titleLabel.Text = "Ninja Legends 2"
 titleLabel.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
 titleLabel.TextColor3 = Color3.new(1, 1, 1)
 
@@ -180,7 +180,7 @@ local autoSwingButton = Instance.new("TextButton", frame)
 autoSwingButton.Size = UDim2.new(0.8, 0, 0.1, 0)
 autoSwingButton.Position = UDim2.new(0.1, 0, 0.15, 0)
 autoSwingButton.Text = "Start Auto Swing"
-autoSwingButton.MouseButton1Click:Connect(autoSwing)
+autoSwingButton.ScreenTap1Click:Connect(autoSwing)
 
 -- Continue adding GUI buttons for other functions as needed
 
