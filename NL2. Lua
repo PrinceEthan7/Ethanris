@@ -1,0 +1,116 @@
+-- Draggable GUI Script for Ninja Legends 2
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- GUI Elements
+local screenGui = script.Parent
+local frame = screenGui:WaitForChild("Frame") -- Your draggable frame
+local autoSwingButton = frame:WaitForChild("AutoSwingButton") -- Button for auto swing
+local autoCollectButton = frame:WaitForChild("AutoCollectButton") -- Button for auto collect
+local autoOpenEggButton = frame:WaitForChild("AutoOpenEggButton") -- Button for auto open egg
+local autoPetXPButton = frame:WaitForChild("AutoPetXPButton") -- Button for auto pet XP
+
+-- Variables to control auto features
+local autoSwingActive = false
+local autoCollectActive = false
+local autoOpenEggActive = false
+local autoPetXPActive = false
+
+-- Function to make the frame draggable
+local function makeDraggable(frame)
+    local dragging
+    local dragInput
+    local startPos
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            startPos = input.Position - frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            frame.Position = UDim2.new(0, input.Position.X - startPos.X, 0, input.Position.Y - startPos.Y)
+        end
+    end)
+end
+
+-- Auto Swing Function
+local function autoSwing()
+    while autoSwingActive do
+        wait(0.1)
+        fireclickdetector(workspace.YourWeapon.ClickDetector) -- Replace with your weapon's ClickDetector
+    end
+end
+
+-- Auto Collect Crystals Function
+local function autoCollectCrystals()
+    while autoCollectActive do
+        wait(0.5)
+        for _, crystal in pairs(workspace:GetChildren()) do
+            if crystal:IsA("Crystal") then
+                crystal:Touch(character)
+            end
+        end
+    end
+end
+
+-- Auto Open Egg Function
+local function autoOpenEgg()
+    while autoOpenEggActive do
+        wait(1)
+        fireclickdetector(workspace.Eggs.Egg1.ClickDetector) -- Replace with your egg's ClickDetector
+    end
+end
+
+-- Auto Pet XP Function
+local function autoPetXP()
+    while autoPetXPActive do
+        wait(0.5)
+        for _, pet in pairs(player.Pets:GetChildren()) do
+            if pet:IsA("Pet") then
+                pet:GainXP(1) -- Replace with the actual method to gain XP for pets
+            end
+        end
+    end
+end
+
+-- Button Click Events
+autoSwingButton.MouseButton1Click:Connect(function()
+    autoSwingActive = not autoSwingActive
+    if autoSwingActive then
+        autoSwing()
+    end
+end)
+
+autoCollectButton.MouseButton1Click:Connect(function()
+    autoCollectActive = not autoCollectActive
+    if autoCollectActive then
+        autoCollectCrystals()
+    end
+end)
+
+autoOpenEggButton.MouseButton1Click:Connect(function()
+    autoOpenEggActive = not autoOpenEggActive
+    if autoOpenEggActive then
+        autoOpenEgg()
+    end
+end)
+
+autoPetXPButton.MouseButton1Click:Connect(function()
+    autoPetXPActive = not autoPetXPActive
+    if autoPetXPActive then
+        autoPetXP()
+    end
+end)
+
+-- Make the frame draggable
+makeDraggable(frame)
