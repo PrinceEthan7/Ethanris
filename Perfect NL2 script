@@ -1,0 +1,274 @@
+getgenv().S = false
+getgenv().B = false
+getgenv().O = false
+getgenv().Sh = false
+getgenv().Se = false
+getgenv().Gc = false
+getgenv().Cr = false
+getgenv().Gr = false
+getgenv().Bo = false
+getgenv().PetXP = false
+
+-- rank
+
+function doGr()
+    spawn(function()
+        while Gr == true do
+        if not getgenv() then break end
+        local args = {[1] = "buyEvolution",[2] = game:GetService("ReplicatedStorage"):WaitForChild("Evolutions"):WaitForChild("Ground"):WaitForChild("Spirit Warrior")}game.Players.LocalPlayer:WaitForChild("saberEvent"):FireServer(unpack(args))
+        -- [other ranks code here]
+        wait(5)
+        end
+    end)
+end
+
+-- sell
+
+function doSe()
+    spawn(function()
+        while Se == true do 
+            if not getgenv() then break end
+            local pl = game.Players.LocalPlayer.Character.HumanoidRootPart
+            local location = CFrame.new(-86, 8631, 36)
+            pl.CFrame = location
+            wait(0.5)
+            local location = CFrame.new(-90, 8647, 36)
+            pl.CFrame = location
+            wait(0.5)
+        end
+    end)
+end
+
+-- boss
+function doBo()
+    spawn(function()
+        while Bo == true do
+        if not getgenv() then break end
+        teleportTo(game:GetService("Workspace").spawnedBosses["Elemental Cyborg"].UpperTorso.CFrame)
+        local args = {[1] = "swingBlade"}game.Players.LocalPlayer:WaitForChild("saberEvent"):FireServer(unpack(args))
+        wait()
+        end
+    end)
+end
+
+-- crystals 
+function doCr()
+    spawn(function()
+        while Cr == true do 
+            if not getgenv() then break end
+            local args = {
+                [1] = "buyAllItems",
+                [2] = {
+                    ["whichItems"] = "Crystals",
+                    ["whichPlanet"] = "Planet Chaos"
+                }
+            }
+            game.Players.LocalPlayer:WaitForChild("saberEvent"):FireServer(unpack(args))            
+            wait()
+        end
+    end)
+end
+
+-- blades
+function doB()
+    spawn(function()
+        while B == true do 
+            if not getgenv() then break end
+            local args = {
+                [1] = "buyAllItems",
+                [2] = {
+                    ["whichItems"] = "Swords",
+                    ["whichPlanet"] = "Planet Chaos"
+                }
+            }
+            game.Players.LocalPlayer:WaitForChild("saberEvent"):FireServer(unpack(args))  
+            wait()
+        end
+    end)
+end
+
+-- swing
+function doS()
+    spawn(function()
+    while S == true do
+    if not getgenv() then break end
+        local args = {
+            [1] = "swingBlade"
+        }
+        
+        game.Players.LocalPlayer:WaitForChild("saberEvent"):FireServer(unpack(args))
+        wait()
+    end
+end)
+end
+
+-- shards, coins
+function doSh()
+    spawn(function()
+        while Sh == true do
+            if not getgenv() then break end
+            for i, v in pairs(game:GetService("Workspace").spawnedCoins["Shuriken City"]:GetDescendants()) do
+                if v.Name == "Shard" and v.Parent then
+                    teleportTo(game:GetService("Workspace").randomStuff.gradientCircle.CFrame)
+                    wait(0.1)
+                end
+            end
+        end
+    end)
+end
+
+-- teleport to
+function teleportTo(placeCFrame)
+    local plyr = game.Players.LocalPlayer
+    if plyr.Character then
+        plyr.Character.HumanoidRootPart.CFrame = placeCFrame
+    end
+  end
+
+-- pet xp
+function doPetXP()
+    spawn(function()
+        while getgenv().PetXP == true do
+            if not getgenv() then break end
+            local args = {
+                [1] = "addPetXP",
+                [2] = 10000 -- setting 10,000 XP per second
+            }
+            game.Players.LocalPlayer:WaitForChild("saberEvent"):FireServer(unpack(args))
+            wait(1) -- waits 1 second for 10,000 XP per second rate
+        end
+    end)
+end
+
+-- GUI
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Ninja Legends 2",
+    LoadingTitle = "AOT is peak fiction",
+    LoadingSubtitle = "by diglt",
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil, 
+       FileName = "Digital Hub"
+    },
+    Discord = {
+       Enabled = true,
+       Invite = "wk2xtM8H", 
+       RememberJoins = true 
+    },
+    KeySystem = false, 
+ })
+
+local Tab = Window:CreateTab("Main")
+local Tab1 = Window:CreateTab("Other") 
+
+local Button = Tab1:CreateButton({
+    Name = "Redeem All Codes",
+    Callback = function()
+        local args = {[1] = "powers500"}game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("codeRemote"):InvokeServer(unpack(args))
+        -- [other codes here]
+    end,
+})
+
+local Button = Tab1:CreateButton({
+    Name = "Destroy Gui",
+    Callback = function()
+        Rayfield:Destroy()
+    end,
+})
+
+-- GUI Toggles for functions
+local Section = Tab:CreateSection("Sell")
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Sell",
+    CurrentValue = false,
+    Callback = function(bool)
+     getgenv().Se = bool
+     if bool then
+         doSe()
+     end
+    end,
+ })
+
+local Section = Tab:CreateSection("Autos")
+
+local Toggle = Tab:CreateToggle({
+   Name = "Auto Swing",
+   CurrentValue = false,
+   Callback = function(bool)
+    getgenv().S = bool
+    if bool then
+        doS()
+    end
+   end,
+}) 
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Crystal (More Element Storage)",
+    CurrentValue = false,
+    Callback = function(bool)
+     getgenv().Cr = bool
+     if bool then
+         doCr()
+     end
+    end,
+})
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Blade (More Coins)",
+    CurrentValue = false,
+    Callback = function(bool)
+     getgenv().B = bool
+     if bool then
+         doB()
+     end
+    end,
+})
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Rank",
+    CurrentValue = false,
+    Callback = function(bool)
+     getgenv().Gr = bool
+     if bool then
+         doGr()
+     end
+    end,
+})
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Boss",
+    CurrentValue = false,
+    Callback = function(bool)
+     getgenv().Bo = bool
+     if bool then
+         doBo()
+     end
+    end,
+})
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Shard/Coin (WIP/ Use Volcano Master For Now)",
+    CurrentValue = false,
+    Callback = function(bool)
+     getgenv().Sh = bool
+     if bool then
+         doSh()
+     end
+    end,
+})
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Pet XP (10,000 XP/s)",
+    CurrentValue = false,
+    Callback = function(bool)
+        getgenv().PetXP = bool
+        if bool then
+            doPetXP()
+        end
+    end,
+})
+
+Rayfield:LoadConfiguration()
