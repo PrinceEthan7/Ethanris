@@ -1,0 +1,586 @@
+-- Dragon Blox Ultimate Script with Solo Leveling GUI
+-- Created for educational purposes only
+-- Features: Autofarm, Auto Rebirth, Auto Quest, Stat Checker, ESP
+
+local url = "https://raw.githubusercontent.com/example/dragonbloxscript/main/resources.lua"
+
+-- Guard clause to prevent multiple execution
+if getgenv().DragonBloxLoaded then return end
+getgenv().DragonBloxLoaded = true
+
+-- Core variables and settings
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+-- Configuration
+local Config = {
+    AutoFarm = false,
+    AutoRebirth = false,
+    AutoQuest = false,
+    ESP = false,
+    TargetNPC = "Evil Saiyan",
+    FarmDistance = 5,
+    UISize = UDim2.new(0, 300, 0, 350),
+    UIPosition = UDim2.new(0.5, -150, 0.5, -175),
+    Colors = {
+        Background = Color3.fromRGB(17, 23, 39),
+        Border = Color3.fromRGB(59, 130, 246),
+        Text = Color3.fromRGB(203, 213, 225),
+        TextHighlight = Color3.fromRGB(147, 197, 253),
+        Button = Color3.fromRGB(30, 58, 138),
+        ButtonHover = Color3.fromRGB(37, 99, 235),
+        ToggleOn = Color3.fromRGB(59, 130, 246),
+        ToggleOff = Color3.fromRGB(71, 85, 105)
+    }
+}
+
+-- Initialize ESP elements container
+local ESPObjects = {}
+
+-- Create UI
+local function CreateUI()
+    -- Main ScreenGui
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "DragonBloxGUI"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Parent = game:GetService("CoreGui")
+
+    -- Main Frame
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = Config.UISize
+    MainFrame.Position = Config.UIPosition
+    MainFrame.BackgroundColor3 = Config.Colors.Background
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    MainFrame.Parent = ScreenGui
+
+    -- Corner rounding
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = MainFrame
+
+    -- Create a glowing border effect
+    local BorderFrame = Instance.new("Frame")
+    BorderFrame.Name = "GlowBorder"
+    BorderFrame.Size = UDim2.new(1, 0, 1, 0)
+    BorderFrame.BackgroundColor3 = Config.Colors.Border
+    BorderFrame.BorderSizePixel = 0
+    BorderFrame.ZIndex = 0
+    BorderFrame.Parent = MainFrame
+
+    local BorderUICorner = Instance.new("UICorner")
+    BorderUICorner.CornerRadius = UDim.new(0, 8)
+    BorderUICorner.Parent = BorderFrame
+
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Color = Config.Colors.Border
+    UIStroke.Thickness = 2
+    UIStroke.Parent = MainFrame
+
+    -- Title Bar
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Name = "TitleBar"
+    TitleBar.Size = UDim2.new(1, 0, 0, 40)
+    TitleBar.BackgroundColor3 = Config.Colors.Background
+    TitleBar.BorderSizePixel = 0
+    TitleBar.Parent = MainFrame
+
+    local TitleText = Instance.new("TextLabel")
+    TitleText.Name = "TitleText"
+    TitleText.Size = UDim2.new(1, -80, 1, 0)
+    TitleText.Position = UDim2.new(0, 40, 0, 0)
+    TitleText.BackgroundTransparency = 1
+    TitleText.Font = Enum.Font.GothamBold
+    TitleText.Text = "Dragon Blox Ultimate"
+    TitleText.TextColor3 = Config.Colors.TextHighlight
+    TitleText.TextSize = 18
+    TitleText.TextXAlignment = Enum.TextXAlignment.Left
+    TitleText.Parent = TitleBar
+
+    -- Minimize Button
+    local MinimizeButton = Instance.new("TextButton")
+    MinimizeButton.Name = "MinimizeButton"
+    MinimizeButton.Size = UDim2.new(0, 40, 0, 40)
+    MinimizeButton.Position = UDim2.new(1, -40, 0, 0)
+    MinimizeButton.BackgroundTransparency = 1
+    MinimizeButton.Font = Enum.Font.GothamBold
+    MinimizeButton.Text = "-"
+    MinimizeButton.TextColor3 = Config.Colors.Text
+    MinimizeButton.TextSize = 24
+    MinimizeButton.Parent = TitleBar
+
+    -- Content Container
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Name = "ContentContainer"
+    ContentContainer.Size = UDim2.new(1, 0, 1, -40)
+    ContentContainer.Position = UDim2.new(0, 0, 0, 40)
+    ContentContainer.BackgroundTransparency = 1
+    ContentContainer.BorderSizePixel = 0
+    ContentContainer.Parent = MainFrame
+
+    -- Function to create a toggle button
+    local function CreateToggle(name, position, callback)
+        local ToggleFrame = Instance.new("Frame")
+        ToggleFrame.Name = name .. "Toggle"
+        ToggleFrame.Size = UDim2.new(1, -20, 0, 50)
+        ToggleFrame.Position = position
+        ToggleFrame.BackgroundTransparency = 0.9
+        ToggleFrame.BackgroundColor3 = Config.Colors.Background
+        ToggleFrame.BorderSizePixel = 0
+        ToggleFrame.Parent = ContentContainer
+
+        local ToggleCorner = Instance.new("UICorner")
+        ToggleCorner.CornerRadius = UDim.new(0, 6)
+        ToggleCorner.Parent = ToggleFrame
+
+        local ToggleStroke = Instance.new("UIStroke")
+        ToggleStroke.Color = Config.Colors.Border
+        ToggleStroke.Transparency = 0.7
+        ToggleStroke.Thickness = 1
+        ToggleStroke.Parent = ToggleFrame
+
+        local ToggleLabel = Instance.new("TextLabel")
+        ToggleLabel.Name = "Label"
+        ToggleLabel.Size = UDim2.new(1, -60, 1, 0)
+        ToggleLabel.Position = UDim2.new(0, 10, 0, 0)
+        ToggleLabel.BackgroundTransparency = 1
+        ToggleLabel.Font = Enum.Font.GothamMedium
+        ToggleLabel.Text = name
+        ToggleLabel.TextColor3 = Config.Colors.Text
+        ToggleLabel.TextSize = 16
+        ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        ToggleLabel.Parent = ToggleFrame
+
+        local ToggleButton = Instance.new("Frame")
+        ToggleButton.Name = "Button"
+        ToggleButton.Size = UDim2.new(0, 40, 0, 24)
+        ToggleButton.Position = UDim2.new(1, -50, 0.5, -12)
+        ToggleButton.BackgroundColor3 = Config.Colors.ToggleOff
+        ToggleButton.BorderSizePixel = 0
+        ToggleButton.Parent = ToggleFrame
+
+        local ToggleButtonCorner = Instance.new("UICorner")
+        ToggleButtonCorner.CornerRadius = UDim.new(0, 12)
+        ToggleButtonCorner.Parent = ToggleButton
+
+        local ToggleCircle = Instance.new("Frame")
+        ToggleCircle.Name = "Circle"
+        ToggleCircle.Size = UDim2.new(0, 18, 0, 18)
+        ToggleCircle.Position = UDim2.new(0, 3, 0.5, -9)
+        ToggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ToggleCircle.BorderSizePixel = 0
+        ToggleCircle.Parent = ToggleButton
+
+        local ToggleCircleCorner = Instance.new("UICorner")
+        ToggleCircleCorner.CornerRadius = UDim.new(1, 0)
+        ToggleCircleCorner.Parent = ToggleCircle
+
+        -- Functionality
+        local Enabled = false
+        
+        local function UpdateToggle()
+            local targetPos = Enabled and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+            local targetColor = Enabled and Config.Colors.ToggleOn or Config.Colors.ToggleOff
+            
+            -- Animate the toggle
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), {Position = targetPos}):Play()
+            TweenService:Create(ToggleButton, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+            
+            -- Execute the callback
+            callback(Enabled)
+        end
+        
+        ToggleFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                Enabled = not Enabled
+                UpdateToggle()
+            end
+        end)
+        
+        -- Return functions to control the toggle externally
+        return {
+            SetState = function(state)
+                Enabled = state
+                UpdateToggle()
+            end,
+            GetState = function()
+                return Enabled
+            end
+        }
+    end
+    
+    -- Create Toggles
+    local AutoFarmToggle = CreateToggle("Auto Farm", UDim2.new(0, 10, 0, 10), function(state)
+        Config.AutoFarm = state
+    end)
+    
+    local AutoRebirthToggle = CreateToggle("Auto Rebirth", UDim2.new(0, 10, 0, 70), function(state)
+        Config.AutoRebirth = state
+    end)
+    
+    local AutoQuestToggle = CreateToggle("Auto Quest", UDim2.new(0, 10, 0, 130), function(state)
+        Config.AutoQuest = state
+    end)
+    
+    local ESPToggle = CreateToggle("ESP", UDim2.new(0, 10, 0, 190), function(state)
+        Config.ESP = state
+        if state then
+            EnableESP()
+        else
+            DisableESP()
+        end
+    end)
+    
+    -- Stats Section
+    local StatsFrame = Instance.new("Frame")
+    StatsFrame.Name = "StatsFrame"
+    StatsFrame.Size = UDim2.new(1, -20, 0, 80)
+    StatsFrame.Position = UDim2.new(0, 10, 0, 250)
+    StatsFrame.BackgroundTransparency = 0.9
+    StatsFrame.BackgroundColor3 = Config.Colors.Background
+    StatsFrame.BorderSizePixel = 0
+    StatsFrame.Parent = ContentContainer
+    
+    local StatsCorner = Instance.new("UICorner")
+    StatsCorner.CornerRadius = UDim.new(0, 6)
+    StatsCorner.Parent = StatsFrame
+    
+    local StatsStroke = Instance.new("UIStroke")
+    StatsStroke.Color = Config.Colors.Border
+    StatsStroke.Transparency = 0.7
+    StatsStroke.Thickness = 1
+    StatsStroke.Parent = StatsFrame
+    
+    local StatsTitle = Instance.new("TextLabel")
+    StatsTitle.Name = "StatsTitle"
+    StatsTitle.Size = UDim2.new(1, -20, 0, 20)
+    StatsTitle.Position = UDim2.new(0, 10, 0, 5)
+    StatsTitle.BackgroundTransparency = 1
+    StatsTitle.Font = Enum.Font.GothamMedium
+    StatsTitle.Text = "Character Stats"
+    StatsTitle.TextColor3 = Config.Colors.TextHighlight
+    StatsTitle.TextSize = 14
+    StatsTitle.TextXAlignment = Enum.TextXAlignment.Left
+    StatsTitle.Parent = StatsFrame
+    
+    local StatsContainer = Instance.new("Frame")
+    StatsContainer.Name = "StatsContainer"
+    StatsContainer.Size = UDim2.new(1, -20, 0, 50)
+    StatsContainer.Position = UDim2.new(0, 10, 0, 25)
+    StatsContainer.BackgroundTransparency = 1
+    StatsContainer.BorderSizePixel = 0
+    StatsContainer.Parent = StatsFrame
+    
+    -- Initialize our stat labels
+    local StatLabels = {}
+    
+    local function CreateStatLabel(name, position)
+        local StatFrame = Instance.new("Frame")
+        StatFrame.Name = name .. "Stat"
+        StatFrame.Size = UDim2.new(0.5, -5, 0, 20)
+        StatFrame.Position = position
+        StatFrame.BackgroundTransparency = 1
+        StatFrame.BorderSizePixel = 0
+        StatFrame.Parent = StatsContainer
+        
+        local StatName = Instance.new("TextLabel")
+        StatName.Name = "Name"
+        StatName.Size = UDim2.new(0.5, 0, 1, 0)
+        StatName.BackgroundTransparency = 1
+        StatName.Font = Enum.Font.GothamMedium
+        StatName.Text = name .. ":"
+        StatName.TextColor3 = Config.Colors.Text
+        StatName.TextSize = 12
+        StatName.TextXAlignment = Enum.TextXAlignment.Left
+        StatName.Parent = StatFrame
+        
+        local StatValue = Instance.new("TextLabel")
+        StatValue.Name = "Value"
+        StatValue.Size = UDim2.new(0.5, 0, 1, 0)
+        StatValue.Position = UDim2.new(0.5, 0, 0, 0)
+        StatValue.BackgroundTransparency = 1
+        StatValue.Font = Enum.Font.GothamMedium
+        StatValue.Text = "0"
+        StatValue.TextColor3 = Config.Colors.TextHighlight
+        StatValue.TextSize = 12
+        StatValue.TextXAlignment = Enum.TextXAlignment.Left
+        StatValue.Parent = StatFrame
+        
+        StatLabels[name] = StatValue
+        return StatValue
+    end
+    
+    -- Create our stat labels
+    CreateStatLabel("STR", UDim2.new(0, 0, 0, 0))
+    CreateStatLabel("DEF", UDim2.new(0.5, 5, 0, 0))
+    CreateStatLabel("SPEED", UDim2.new(0, 0, 0, 25))
+    CreateStatLabel("KI", UDim2.new(0.5, 5, 0, 25))
+    
+    -- Minimize Button Functionality
+    local minimized = false
+    MinimizeButton.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        local targetSize
+        
+        if minimized then
+            targetSize = UDim2.new(0, 300, 0, 40)
+            MinimizeButton.Text = "+"
+        else
+            targetSize = Config.UISize
+            MinimizeButton.Text = "-"
+        end
+        
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = targetSize
+        }):Play()
+    end)
+    
+    return {
+        ScreenGui = ScreenGui,
+        MainFrame = MainFrame,
+        StatLabels = StatLabels
+    }
+end
+
+-- Create the UI
+local UI = CreateUI()
+
+-- Function to update stats
+local function UpdateStats()
+    local stats = LocalPlayer:WaitForChild("leaderstats")
+    
+    if stats then
+        for stat, label in pairs(UI.StatLabels) do
+            local statValue = stats:FindFirstChild(stat) or stats:FindFirstChild(stat:lower()) or stats:FindFirstChild(stat:upper())
+            
+            if statValue then
+                label.Text = tostring(statValue.Value)
+            end
+        end
+    end
+end
+
+-- Auto Farm Function
+local function AutoFarm()
+    if not Config.AutoFarm then return end
+    
+    -- Find closest NPC
+    local targetNPC
+    local minDistance = math.huge
+    
+    for _, npc in pairs(workspace:GetChildren()) do
+        if npc:IsA("Model") and npc.Name == Config.TargetNPC and npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
+            local distance = (HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
+            if distance < minDistance then
+                minDistance = distance
+                targetNPC = npc
+            end
+        end
+    end
+    
+    if targetNPC then
+        -- Teleport to NPC
+        HumanoidRootPart.CFrame = targetNPC.HumanoidRootPart.CFrame * CFrame.new(0, 0, Config.FarmDistance)
+        
+        -- Attack logic
+        local attackRemote = ReplicatedStorage:FindFirstChild("Attack") or ReplicatedStorage:FindFirstChild("RemoteEvent")
+        if attackRemote and attackRemote:IsA("RemoteEvent") then
+            attackRemote:FireServer(targetNPC)
+        end
+    end
+end
+
+-- Auto Rebirth Function
+local function AutoRebirth()
+    if not Config.AutoRebirth then return end
+    
+    local rebirthRemote = ReplicatedStorage:FindFirstChild("Rebirth") or ReplicatedStorage:FindFirstChild("RebirthEvent")
+    if rebirthRemote and rebirthRemote:IsA("RemoteEvent") then
+        rebirthRemote:FireServer()
+    end
+end
+
+-- Auto Quest Function
+local function AutoQuest()
+    if not Config.AutoQuest then return end
+    
+    -- Find quest giver NPC
+    local questGiver = workspace:FindFirstChild("QuestGiver") or workspace:FindFirstChild("QuestNPC")
+    if questGiver then
+        -- Get quest
+        local questRemote = ReplicatedStorage:FindFirstChild("GetQuest") or ReplicatedStorage:FindFirstChild("QuestRemote")
+        if questRemote and questRemote:IsA("RemoteEvent") then
+            questRemote:FireServer()
+        end
+        
+        -- Complete quest if possible
+        local completeQuestRemote = ReplicatedStorage:FindFirstChild("CompleteQuest")
+        if completeQuestRemote and completeQuestRemote:IsA("RemoteEvent") then
+            completeQuestRemote:FireServer()
+        end
+    end
+end
+
+-- ESP Functions
+local function CreateESPObject(model)
+    if not model:IsA("Model") or not model:FindFirstChild("HumanoidRootPart") or ESPObjects[model] then 
+        return 
+    end
+    
+    local espBillboard = Instance.new("BillboardGui")
+    espBillboard.Name = "ESP"
+    espBillboard.AlwaysOnTop = true
+    espBillboard.Size = UDim2.new(0, 100, 0, 50)
+    espBillboard.StudsOffset = Vector3.new(0, 3, 0)
+    espBillboard.Adornee = model:FindFirstChild("HumanoidRootPart")
+    
+    local espLabel = Instance.new("TextLabel")
+    espLabel.Name = "ESPLabel"
+    espLabel.Size = UDim2.new(1, 0, 1, 0)
+    espLabel.BackgroundTransparency = 1
+    espLabel.TextColor3 = model:FindFirstChild("Humanoid") and model.Humanoid.Health > 0 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 0, 0)
+    espLabel.Text = model.Name
+    espLabel.Font = Enum.Font.GothamBold
+    espLabel.TextSize = 14
+    espLabel.TextStrokeTransparency = 0.5
+    espLabel.Parent = espBillboard
+    
+    espBillboard.Parent = model
+    ESPObjects[model] = espBillboard
+    
+    return espBillboard
+end
+
+local function EnableESP()
+    -- Create ESP for existing models
+    for _, model in pairs(workspace:GetChildren()) do
+        if model:IsA("Model") and (model:FindFirstChild("Humanoid") or Players:FindFirstChild(model.Name)) then
+            CreateESPObject(model)
+        end
+    end
+    
+    -- Hook into ChildAdded to create ESP for new models
+    workspace.ChildAdded:Connect(function(child)
+        if Config.ESP and child:IsA("Model") then
+            task.wait(0.5) -- Wait for humanoid to be added
+            if child:FindFirstChild("Humanoid") or Players:FindFirstChild(child.Name) then
+                CreateESPObject(child)
+            end
+        end
+    end)
+end
+
+local function DisableESP()
+    for model, espObject in pairs(ESPObjects) do
+        if espObject and espObject.Parent then
+            espObject:Destroy()
+        end
+    end
+    
+    ESPObjects = {}
+end
+
+-- Handle character respawn
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    Humanoid = newCharacter:WaitForChild("Humanoid")
+    HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
+    
+    -- Wait a bit for stats to load
+    task.wait(1)
+    UpdateStats()
+end)
+
+-- Main Loop
+RunService.Heartbeat:Connect(function()
+    if Config.AutoFarm then AutoFarm() end
+    if Config.AutoRebirth then AutoRebirth() end
+    if Config.AutoQuest then AutoQuest() end
+    
+    -- Update stats periodically
+    if tick() % 5 < 0.1 then
+        UpdateStats()
+    end
+end)
+
+-- Initial Stats Update
+task.spawn(function()
+    task.wait(2) -- Wait for stats to load
+    UpdateStats()
+end)
+
+-- Script loaded notification
+local notify = Instance.new("ScreenGui")
+notify.Name = "Notification"
+notify.Parent = game:GetService("CoreGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 60)
+frame.Position = UDim2.new(0.5, -100, 0.9, -60)
+frame.BackgroundColor3 = Config.Colors.Background
+frame.BorderSizePixel = 0
+frame.Parent = notify
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Config.Colors.Border
+stroke.Thickness = 2
+stroke.Parent = frame
+
+local text = Instance.new("TextLabel")
+text.Size = UDim2.new(1, -20, 1, 0)
+text.Position = UDim2.new(0, 10, 0, 0)
+text.BackgroundTransparency = 1
+text.Font = Enum.Font.GothamBold
+text.Text = "Dragon Blox Script Loaded!"
+text.TextColor3 = Config.Colors.TextHighlight
+text.TextSize = 16
+text.Parent = frame
+
+-- Fade out notification
+TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 3), {
+    Position = UDim2.new(0.5, -100, 0.85, -60)
+}):Play()
+
+task.spawn(function()
+    task.wait(4)
+    TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Position = UDim2.new(0.5, -100, 0.9, 0),
+        BackgroundTransparency = 1
+    }):Play()
+    TweenService:Create(text, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        TextTransparency = 1
+    }):Play()
+    TweenService:Create(stroke, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Transparency = 1
+    }):Play()
+    
+    task.wait(0.6)
+    notify:Destroy()
+end)
+
+-- Load any external resources if needed
+if url and url ~= "" then
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    
+    if not success then
+        warn("Failed to load external resource: " .. tostring(result))
+    end
+end 
