@@ -1,0 +1,136 @@
+-- Ensure the necessary services are available
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+
+-- Variables for remote events
+local AttackRemote = ReplicatedStorage:WaitForChild("Attack")
+local RebirthRemote = ReplicatedStorage:WaitForChild("Rebirth")
+local QuestRemote = ReplicatedStorage:WaitForChild("QuestRemote")
+
+-- Define the NPCs in DragonBlox Ultimate (update with actual NPC names)
+local TargetNPCs = {
+    "Frieza",  -- Example NPC
+    "Cell",    -- Example NPC
+    "MajinBuu" -- Example NPC
+}
+
+-- Define the Quest NPCs in DragonBlox Ultimate (update with actual NPC names)
+local QuestNPCs = {
+    "QuestGiver1",  -- Example Quest NPC
+    "QuestGiver2"   -- Example Quest NPC
+}
+
+-- GUI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = CoreGui
+ScreenGui.Name = "AutoFarmGUI"
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 200, 0, 250)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -125)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.5
+MainFrame.Parent = ScreenGui
+MainFrame.Draggable = true
+MainFrame.Selectable = true
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Title.BackgroundTransparency = 0.8
+Title.Text = "AutoFarm Script"
+Title.TextSize = 20
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextAlign = Enum.TextXAlignment.Center
+Title.Parent = MainFrame
+
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(0, 180, 0, 50)
+Button.Position = UDim2.new(0, 10, 0, 60)
+Button.Text = "Start AutoFarm"
+Button.Parent = MainFrame
+Button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+
+local CollapseButton = Instance.new("TextButton")
+CollapseButton.Size = UDim2.new(0, 50, 0, 50)
+CollapseButton.Position = UDim2.new(1, -50, 0, 0)
+CollapseButton.Text = "−"
+CollapseButton.Parent = MainFrame
+CollapseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+
+-- Functionality to collapse/uncollapse the GUI
+local isCollapsed = false
+CollapseButton.MouseButton1Click:Connect(function()
+    if isCollapsed then
+        MainFrame.Size = UDim2.new(0, 200, 0, 250)
+        CollapseButton.Text = "−"
+    else
+        MainFrame.Size = UDim2.new(0, 200, 0, 50)
+        CollapseButton.Text = "+"
+    end
+    isCollapsed = not isCollapsed
+end)
+
+-- Debugging print to track script start
+print("AutoFarm script initialized.")
+
+-- Function to handle AutoFarm (Attack NPCs)
+local function AutoFarm()
+    while true do
+        for _, npcName in pairs(TargetNPCs) do
+            local targetNPC = game.Workspace:FindFirstChild(npcName, true) -- Ensure we search through descendants if necessary
+            if targetNPC and targetNPC:FindFirstChild("Humanoid") then
+                print("Attacking NPC: " .. npcName)
+                -- Check for humanoid and attack only if it's a valid NPC
+                AttackRemote:FireServer(targetNPC)
+            else
+                print("NPC " .. npcName .. " not found or missing humanoid.")
+            end
+        end
+        wait(3) -- Adjusted delay between attacks to prevent overloading the game server
+    end
+end
+
+-- Function to handle AutoRebirth with a condition (e.g., level 100)
+local function AutoRebirth()
+    while true do
+        if Player.Level >= 100 then -- Example condition: Rebirth when level is 100
+            if RebirthRemote then
+                print("Rebirthing at level 100...")
+                RebirthRemote:FireServer()
+            else
+                print("RebirthRemote not found!")
+            end
+        end
+        wait(30) -- Delay between rebirth checks
+    end
+end
+
+-- Function to handle Quest Completion (Complete all available quests)
+local function CompleteQuest()
+    while true do
+        for _, questNPCName in pairs(QuestNPCs) do
+            local questNPC = game.Workspace:FindFirstChild(questNPCName, true) -- Search through descendants
+            if questNPC then
+                print("Completing quest with NPC: " .. questNPCName)
+                QuestRemote:FireServer(questNPC)
+            else
+                print("Quest NPC " .. questNPCName .. " not found!")
+            end
+        end
+        wait(5) -- Delay between quest completions
+    end
+end
+
+-- Button action when clicked
+Button.MouseButton1Click:Connect(function()
+    print("AutoFarm started.")
+    -- Start AutoFarm, AutoRebirth, and Quest completion in parallel
+    spawn(AutoFarm)
+    spawn(AutoRebirth)
+    spawn(CompleteQuest)
+    Button.Text = "AutoFarm Running"
+    Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Change to red when running
+end) 
